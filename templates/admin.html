@@ -9,10 +9,11 @@
 </head>
 <body class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
   <!-- Dark/Light Mode Toggle -->
-  <div class="absolute top-4 right-4">
+  <div class="absolute top-4 right-4 flex gap-2">
     <button id="theme-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition" title="Toggle dark mode">
       <span id="theme-icon">🌙</span>
     </button>
+    <a href="/admin/logout" id="logout-btn" class="p-2 rounded-full bg-red-100 dark:bg-red-700 hover:bg-red-200 dark:hover:bg-red-600 text-red-700 dark:text-white font-semibold transition" title="Logout">Logout</a>
   </div>
   <main class="max-w-5xl mx-auto p-4 sm:p-8">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -56,7 +57,7 @@
     </div>
   </div>
   <script>
-    // Dark/Light mode toggle (improved)
+    // Dark/Light mode toggle (robust)
     const themeToggle = document.getElementById('theme-toggle');
     const themeIcon = document.getElementById('theme-icon');
     function setTheme(dark) {
@@ -64,12 +65,22 @@
       localStorage.setItem('theme', dark ? 'dark' : 'light');
       themeIcon.textContent = dark ? '☀️' : '🌙';
     }
-    themeToggle.onclick = () => setTheme(!document.documentElement.classList.contains('dark'));
+    function updateThemeIcon() {
+      themeIcon.textContent = document.documentElement.classList.contains('dark') ? '☀️' : '🌙';
+    }
+    themeToggle.onclick = () => {
+      setTheme(!document.documentElement.classList.contains('dark'));
+      updateThemeIcon();
+    };
     (function() {
       const saved = localStorage.getItem('theme');
       setTheme(saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches));
+      updateThemeIcon();
       window.addEventListener('storage', (e) => {
-        if (e.key === 'theme') setTheme(localStorage.getItem('theme') === 'dark');
+        if (e.key === 'theme') {
+          setTheme(localStorage.getItem('theme') === 'dark');
+          updateThemeIcon();
+        }
       });
     })();
 
