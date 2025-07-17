@@ -149,7 +149,7 @@
       try {
         await uploadFile(data);
         await fetchAndShowUserUploads(uploader);
-        setTimeout(() => { window.location.href = '/dashboard'; }, 1500);
+        // No redirect
       } catch (err) {
         showToast('Upload failed. Try again.', false);
       } finally {
