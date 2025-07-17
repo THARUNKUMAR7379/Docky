@@ -149,6 +149,7 @@
       try {
         await uploadFile(data);
         await fetchAndShowUserUploads(uploader);
+        setTimeout(() => { window.location.href = '/dashboard'; }, 1500);
       } catch (err) {
         showToast('Upload failed. Try again.', false);
       } finally {
@@ -171,7 +172,6 @@
             form.reset();
             fileInfo.classList.add('hidden');
             setTimeout(() => { progressBar.style.width = '0%'; }, 1000);
-            setTimeout(() => { window.location.href = '/dashboard'; }, 1500);
             resolve();
           } else {
             showToast('Upload failed. Try again.', false);
