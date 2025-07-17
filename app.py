@@ -19,7 +19,9 @@ class Submission(db.Model):
     filename = db.Column(db.String(255), nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
-db.create_all()
+# Create tables within app context
+with app.app_context():
+    db.create_all()
 
 @app.route('/', methods=['GET', 'POST'])
 def user_dashboard():
