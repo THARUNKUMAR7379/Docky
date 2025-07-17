@@ -63,7 +63,7 @@ def user_dashboard():
 @app.route('/dashboard/logout')
 def dashboard_logout():
     session.pop('dashboard_auth', None)
-    return redirect(url_for('user_dashboard'))
+    return redirect(url_for('upload_page'))
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin_dashboard():
