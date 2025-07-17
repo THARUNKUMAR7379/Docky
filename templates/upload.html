@@ -309,7 +309,12 @@
       logoutBtn.className = 'p-2 rounded-full bg-red-100 dark:bg-red-700 hover:bg-red-200 dark:hover:bg-red-600 text-red-700 dark:text-white font-semibold transition absolute top-4 right-20';
       logoutBtn.textContent = 'Logout';
       logoutBtn.title = 'Logout';
-      logoutBtn.onclick = () => { setTimeout(() => { window.location.href = '/'; }, 100); };
+      logoutBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        fetch('/dashboard/logout').then(() => {
+          window.location.href = '/';
+        });
+      });
       document.body.appendChild(logoutBtn);
     }
   </script>
