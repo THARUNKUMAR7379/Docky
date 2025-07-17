@@ -3,41 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <title>Docky – Admin Dashboard</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #f8f9fa; margin: 0; padding: 0; }
-        .container { max-width: 700px; margin: 60px auto; background: #fff; padding: 32px 24px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
-        h2 { text-align: center; margin-bottom: 24px; color: #333; }
-        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-        th, td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: left; }
-        th { background: #f1f1f1; color: #555; }
-        tr:hover { background: #f9f9f9; }
-        a { color: #007bff; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-    </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Admin Dashboard</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>File</th>
-                    <th>Timestamp</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for name, filename, timestamp in submissions %}
-                <tr>
-                    <td>{{ name }}</td>
-                    <td><a href="{{ url_for('uploaded_file', filename=filename) }}" target="_blank">{{ filename }}</a></td>
-                    <td>{{ timestamp }}</td>
-                </tr>
-                {% else %}
-                <tr><td colspan="3" style="text-align:center; color:#888;">No submissions yet.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    <h2>Submissions</h2>
+    {% if submissions and submissions|length > 0 %}
+    <table border="1" cellpadding="6">
+        <tr>
+            <th>Name</th>
+            <th>Document</th>
+            <th>Timestamp</th>
+        </tr>
+        {% for submission in submissions %}
+        <tr>
+            <td>{{ submission.name }}</td>
+            <td><a href="{{ url_for('uploaded_file', filename=submission.filename) }}" target="_blank">{{ submission.filename }}</a></td>
+            <td>{{ submission.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>No submissions yet.</p>
+    {% endif %}
 </body>
 </html>
