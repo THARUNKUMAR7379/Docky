@@ -237,6 +237,7 @@
               <td class="px-4 py-3 text-center flex gap-2 justify-center">
                 <a href="/uploads/${sub.filename}" download title="Download"><button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded shadow transition" tabindex="0">Download</button></a>
                 <button onclick="openModal('/uploads/${sub.filename}', '${ext}', '${sub.filename.replace(/'/g, "&#39;")}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow transition" title="View" tabindex="0">View</button>
+                <button onclick="deleteUserFile('${sub.filename}', '${name}')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded shadow transition" title="Delete" tabindex="0">Delete</button>
               </td>
             </tr>
           `;
@@ -286,6 +287,30 @@
         modal.classList.add('hidden');
         document.getElementById('modalPreview').innerHTML = '';
       }
+    }
+    function deleteUserFile(filename, name) {
+      if (!confirm('Are you sure you want to delete this file?')) return;
+      fetch(`/delete/${encodeURIComponent(filename)}`, { method: 'DELETE' })
+        .then(res => {
+          if (res.ok) {
+            showToast('File deleted successfully.');
+            fetchAndShowUserUploads(name);
+          } else {
+            showToast('Failed to delete file.', false);
+          }
+        })
+        .catch(() => showToast('Failed to delete file.', false));
+    }
+    // Add logout button (admin only)
+    const isAdmin = window.location.pathname === '/dashboard';
+    if (isAdmin) {
+      const logoutBtn = document.createElement('a');
+      logoutBtn.href = '/dashboard/logout';
+      logoutBtn.className = 'p-2 rounded-full bg-red-100 dark:bg-red-700 hover:bg-red-200 dark:hover:bg-red-600 text-red-700 dark:text-white font-semibold transition absolute top-4 right-20';
+      logoutBtn.textContent = 'Logout';
+      logoutBtn.title = 'Logout';
+      logoutBtn.onclick = () => { setTimeout(() => { window.location.href = '/'; }, 100); };
+      document.body.appendChild(logoutBtn);
     }
   </script>
 </body>
