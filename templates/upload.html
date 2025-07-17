@@ -45,6 +45,26 @@
     </form>
     <a href="/dashboard" class="text-blue-600 dark:text-blue-400 hover:underline text-center">Go to Admin Dashboard</a>
   </main>
+  <!-- User Uploads Table -->
+  <div id="user-uploads-section" class="w-full max-w-2xl mt-10 hidden">
+    <h3 class="text-lg font-bold mb-4 text-gray-800 dark:text-gray-100 text-center">Your Uploaded Files</h3>
+    <div class="overflow-x-auto rounded-lg shadow bg-white dark:bg-gray-800">
+      <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <thead>
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Preview</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">File Name</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Uploaded</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="user-uploads-list" class="divide-y divide-gray-100 dark:divide-gray-700">
+          <!-- JS will populate rows here -->
+        </tbody>
+      </table>
+      <div id="no-user-files" class="text-center text-gray-500 dark:text-gray-400 py-8 hidden">No files uploaded yet.</div>
+    </div>
+  </div>
   <!-- Toast -->
   <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 hidden min-w-[200px] max-w-xs px-4 py-3 rounded shadow-lg text-white text-center"></div>
   <script>
@@ -128,6 +148,7 @@
       document.getElementById('upload-btn').disabled = true;
       try {
         await uploadFile(data);
+        await fetchAndShowUserUploads(uploader);
       } catch (err) {
         showToast('Upload failed. Try again.', false);
       } finally {
@@ -165,6 +186,106 @@
         };
         xhr.send(data);
       });
+    }
+    // Show user uploads table if name is filled
+    const uploaderInput = document.getElementById('uploader');
+    uploaderInput.addEventListener('input', () => {
+      const name = uploaderInput.value.trim();
+      if (name.length >= 2) {
+        fetchAndShowUserUploads(name);
+      } else {
+        document.getElementById('user-uploads-section').classList.add('hidden');
+      }
+    });
+    async function fetchAndShowUserUploads(name) {
+      const section = document.getElementById('user-uploads-section');
+      const tbody = document.getElementById('user-uploads-list');
+      const noFiles = document.getElementById('no-user-files');
+      tbody.innerHTML = '';
+      section.classList.remove('hidden');
+      try {
+        const res = await fetch(`/my_uploads?name=${encodeURIComponent(name)}`);
+        if (!res.ok) throw new Error('Failed to fetch');
+        const files = await res.json();
+        if (!files.length) {
+          noFiles.classList.remove('hidden');
+          return;
+        } else {
+          noFiles.classList.add('hidden');
+        }
+        for (const sub of files) {
+          const ext = sub.filename.split('.').pop().toLowerCase();
+          let preview = '';
+          if (["jpg","jpeg","png"].includes(ext)) {
+            preview = `<img src="/uploads/${sub.filename}" class="w-16 h-12 object-cover rounded shadow hover:scale-105 transition" alt="Image preview" title="Image preview">`;
+          } else if (["mp4","avi","mov","mkv"].includes(ext)) {
+            preview = `<video src="/uploads/${sub.filename}" class="w-20 h-12 rounded shadow hover:scale-105 transition" title="Video preview"></video>`;
+          } else if (["pdf"].includes(ext)) {
+            preview = `<span title="PDF file" class="text-2xl">📄</span>`;
+          } else if (["doc","docx","txt"].includes(ext)) {
+            preview = `<span title="Document file" class="text-2xl">📝</span>`;
+          } else {
+            preview = `<span title="File" class="text-2xl">📁</span>`;
+          }
+          const date = new Date(sub.timestamp);
+          const timeStr = date.toLocaleString();
+          tbody.innerHTML += `
+            <tr class="hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+              <td class="px-4 py-3">${preview}</td>
+              <td class="px-4 py-3 font-medium text-gray-800 dark:text-gray-100">${sub.filename}</td>
+              <td class="px-4 py-3 text-gray-500 dark:text-gray-400">${timeStr}</td>
+              <td class="px-4 py-3 text-center flex gap-2 justify-center">
+                <a href="/uploads/${sub.filename}" download title="Download"><button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded shadow transition" tabindex="0">Download</button></a>
+                <button onclick="openModal('/uploads/${sub.filename}', '${ext}', '${sub.filename.replace(/'/g, "&#39;")}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow transition" title="View" tabindex="0">View</button>
+              </td>
+            </tr>
+          `;
+        }
+      } catch {
+        noFiles.classList.remove('hidden');
+        noFiles.textContent = 'Could not load your files.';
+      }
+    }
+    // Modal preview (reuse from dashboard)
+    function openModal(url, ext, filename) {
+      let modal = document.getElementById('previewModal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'previewModal';
+        modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60';
+        modal.innerHTML = `
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-lg w-full p-6 relative">
+            <button onclick="closeModal()" class="absolute top-2 right-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-2xl" title="Close">&times;</button>
+            <h3 id="modalTitle" class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100"></h3>
+            <div id="modalPreview" class="flex justify-center items-center min-h-[200px]"></div>
+          </div>`;
+        document.body.appendChild(modal);
+      }
+      modal.classList.remove('hidden');
+      document.getElementById('modalTitle').textContent = filename;
+      var preview = document.getElementById('modalPreview');
+      preview.innerHTML = '';
+      ext = ext.toLowerCase();
+      if (["jpg","jpeg","png"].includes(ext)) {
+        preview.innerHTML = `<img src="${url}" alt="Image preview" class="max-w-full max-h-96 rounded">`;
+      } else if (["mp4","avi","mov","mkv"].includes(ext)) {
+        preview.innerHTML = `<video src="${url}" controls autoplay class="max-w-full max-h-96 rounded"></video>`;
+      } else if (ext === "pdf") {
+        preview.innerHTML = `<iframe src="${url}" width="100%" height="400px" class="rounded"></iframe>`;
+      } else if (["txt"].includes(ext)) {
+        fetch(url).then(r => r.text()).then(text => {
+          preview.innerHTML = `<pre class='bg-gray-100 dark:bg-gray-900 p-4 rounded max-h-96 overflow-auto'>${text.replace(/</g, "&lt;")}</pre>`;
+        });
+      } else {
+        preview.innerHTML = `<div class='text-gray-500 text-center'>Preview not available for this file type.</div>`;
+      }
+    }
+    function closeModal() {
+      let modal = document.getElementById('previewModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        document.getElementById('modalPreview').innerHTML = '';
+      }
     }
   </script>
 </body>
