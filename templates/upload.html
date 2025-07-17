@@ -83,7 +83,7 @@
       toast.textContent = msg;
       toast.className = `fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 min-w-[200px] max-w-xs px-4 py-3 rounded shadow-lg text-white text-center ${success ? 'bg-green-600' : 'bg-red-600'}`;
       toast.style.display = 'block';
-      setTimeout(() => { toast.style.display = 'none'; }, 3000);
+      setTimeout(() => { toast.style.display = 'none'; }, 1200);
     }
 
     // Upload logic
@@ -126,6 +126,7 @@
             form.reset();
             fileInfo.classList.add('hidden');
             setTimeout(() => { progressBar.style.width = '0%'; }, 1000);
+            setTimeout(() => { window.location.href = '/dashboard'; }, 1500);
             resolve();
           } else {
             showToast('Upload failed. Try again.', false);
