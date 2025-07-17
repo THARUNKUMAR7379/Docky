@@ -3,19 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Upload | Docky</title>
+  <title>Welcome to Docky | Upload</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="icon" href="/static/favicon.ico">
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+<body class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-gray-100 to-blue-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
   <!-- Dark/Light Mode Toggle -->
   <div class="absolute top-4 right-4">
     <button id="theme-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition" title="Toggle dark mode">
-      <span id="theme-icon"> 31a</span>
+      <span id="theme-icon">🌙</span>
     </button>
   </div>
-  <main class="w-full max-w-md p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg flex flex-col gap-6">
-    <h1 class="text-2xl font-bold text-center text-gray-800 dark:text-gray-100">Upload Document/Media</h1>
+  <!-- Welcome Section -->
+  <section class="flex flex-col items-center mb-8 mt-8">
+    <div class="flex flex-col items-center gap-2">
+      <div class="bg-blue-100 dark:bg-blue-900 rounded-full p-4 mb-2 shadow-lg">
+        <svg class="w-12 h-12 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-800 dark:text-white text-center">Welcome to Docky</h1>
+      <p class="text-lg text-gray-600 dark:text-gray-300 text-center max-w-xl">Easily upload, manage, and share your documents and media. Enjoy a seamless, secure, and beautiful experience with Docky.</p>
+    </div>
+  </section>
+  <!-- Upload Card -->
+  <main class="w-full max-w-md p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl flex flex-col gap-6 border border-gray-200 dark:border-gray-700">
+    <h2 class="text-xl font-bold text-center text-gray-800 dark:text-gray-100 mb-2">Upload Document/Media</h2>
     <form id="upload-form" class="flex flex-col gap-4" autocomplete="off">
       <label class="block">
         <span class="text-gray-700 dark:text-gray-200 font-medium">Your Name</span>
@@ -32,23 +43,36 @@
       </div>
       <button type="submit" class="mt-4 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow transition disabled:opacity-50" id="upload-btn">Upload</button>
     </form>
-    <a href="/dashboard" class="text-blue-600 dark:text-blue-400 hover:underline text-center">Go to Dashboard</a>
+    <a href="/dashboard" class="text-blue-600 dark:text-blue-400 hover:underline text-center">Go to Admin Dashboard</a>
   </main>
   <!-- Toast -->
   <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 hidden min-w-[200px] max-w-xs px-4 py-3 rounded shadow-lg text-white text-center"></div>
   <script>
-    // Dark/Light mode toggle
+    // Dark/Light mode toggle (robust)
     const themeToggle = document.getElementById('theme-toggle');
     const themeIcon = document.getElementById('theme-icon');
     function setTheme(dark) {
       document.documentElement.classList.toggle('dark', dark);
       localStorage.setItem('theme', dark ? 'dark' : 'light');
-      themeIcon.textContent = dark ? '\u2600\ufe0f' : '\ud83c\udf19';
+      themeIcon.textContent = dark ? '☀️' : '🌙';
     }
-    themeToggle.onclick = () => setTheme(!document.documentElement.classList.contains('dark'));
+    function updateThemeIcon() {
+      themeIcon.textContent = document.documentElement.classList.contains('dark') ? '☀️' : '🌙';
+    }
+    themeToggle.onclick = () => {
+      setTheme(!document.documentElement.classList.contains('dark'));
+      updateThemeIcon();
+    };
     (function() {
       const saved = localStorage.getItem('theme');
       setTheme(saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches));
+      updateThemeIcon();
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'theme') {
+          setTheme(localStorage.getItem('theme') === 'dark');
+          updateThemeIcon();
+        }
+      });
     })();
 
     // Drag & drop logic
