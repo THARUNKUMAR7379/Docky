@@ -11,7 +11,7 @@
   <!-- Dark/Light Mode Toggle -->
   <div class="absolute top-4 right-4">
     <button id="theme-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition" title="Toggle dark mode">
-      <span id="theme-icon">🌙</span>
+      <span id="theme-icon"> 31a</span>
     </button>
   </div>
   <main class="w-full max-w-md p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg flex flex-col gap-6">
@@ -19,9 +19,9 @@
     <form id="upload-form" class="flex flex-col gap-4" autocomplete="off">
       <label class="block">
         <span class="text-gray-700 dark:text-gray-200 font-medium">Your Name</span>
-        <input type="text" name="uploader" id="uploader" required minlength="2" maxlength="32" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 p-2" placeholder="Enter your name">
+        <input type="text" name="uploader" id="uploader" required minlength="2" maxlength="32" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 p-2" placeholder="Enter your name" title="Enter your name (2-32 characters)">
       </label>
-      <div id="dropzone" class="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 bg-gray-100 dark:bg-gray-700 cursor-pointer transition hover:border-blue-400 dark:hover:border-blue-400">
+      <div id="dropzone" class="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 bg-gray-100 dark:bg-gray-700 cursor-pointer transition hover:border-blue-400 dark:hover:border-blue-400" title="Drag and drop a file or click to select">
         <svg class="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4a1 1 0 011-1h8a1 1 0 011 1v12m-4 4v-4m0 0l-3 3m3-3l3 3"/></svg>
         <span class="text-gray-600 dark:text-gray-300">Drag & drop file here or <span class="text-blue-600 dark:text-blue-400 underline">browse</span></span>
         <input type="file" name="file" id="file-input" class="hidden" required>
@@ -43,7 +43,7 @@
     function setTheme(dark) {
       document.documentElement.classList.toggle('dark', dark);
       localStorage.setItem('theme', dark ? 'dark' : 'light');
-      themeIcon.textContent = dark ? '☀️' : '🌙';
+      themeIcon.textContent = dark ? '\u2600\ufe0f' : '\ud83c\udf19';
     }
     themeToggle.onclick = () => setTheme(!document.documentElement.classList.contains('dark'));
     (function() {
@@ -98,7 +98,7 @@
       }
       const file = fileInput.files[0];
       const data = new FormData();
-      data.append('uploader', uploader);
+      data.append('name', uploader); // Flask expects 'name'
       data.append('file', file);
       progressBar.style.width = '0%';
       document.getElementById('upload-btn').disabled = true;

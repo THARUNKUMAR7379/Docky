@@ -1,40 +1,192 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="bg-white dark:bg-gray-900">
 <head>
-    <meta charset="UTF-8">
-    <title>Docky – User Dashboard</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
-        .container { max-width: 400px; margin: 60px auto; background: #fff; padding: 32px 24px 24px 24px; border-radius: 8px; box-shadow: 0 2px 12px #0001; }
-        h2 { text-align: center; color: #333; }
-        label { display: block; margin-top: 18px; color: #222; font-weight: bold; }
-        input[type="text"], input[type="file"] { width: 100%; padding: 8px; margin-top: 6px; border: 1px solid #ccc; border-radius: 4px; }
-        button { margin-top: 24px; width: 100%; padding: 10px; background: #007bff; color: #fff; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
-        button:hover { background: #0056b3; }
-        .note { color: #666; font-size: 13px; margin-top: 8px; }
-        .nav {
-            width: 100%; background: none; display: flex; justify-content: flex-end; align-items: center; padding: 18px 32px 0 0;
-        }
-        .admin-link {
-            background: #222; color: #fff; text-decoration: none; padding: 8px 18px; border-radius: 5px; font-weight: bold; font-size: 15px; transition: background 0.2s;
-        }
-        .admin-link:hover { background: #007bff; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Docky – Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" href="/static/favicon.ico">
 </head>
-<body>
-    <div class="nav">
-        <a class="admin-link" href="/admin" target="_self">Admin Dashboard</a>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+  <!-- Dark/Light Mode Toggle -->
+  <div class="absolute top-4 right-4">
+    <button id="theme-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition" title="Toggle dark mode">
+      <span id="theme-icon">🌙</span>
+    </button>
+  </div>
+  <main class="max-w-4xl mx-auto p-4 sm:p-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Your Documents</h1>
+      <div class="flex gap-2 items-center">
+        <input id="search" type="text" placeholder="Search files..." class="rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 focus:ring-2 focus:ring-blue-500 w-48" title="Search by file name or uploader">
+        <select id="sort" class="rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-2" title="Sort files">
+          <option value="newest">Newest</option>
+          <option value="oldest">Oldest</option>
+          <option value="name">Name</option>
+        </select>
+        <button onclick="window.location='/upload'" class="ml-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow transition" title="Upload new file">Upload</button>
+      </div>
     </div>
-    <div class="container">
-        <h2>Upload Document or Media</h2>
-        <form method="POST" enctype="multipart/form-data">
-            <label for="name">Your Name</label>
-            <input type="text" id="name" name="name" required>
-            <label for="file">Select File</label>
-            <input type="file" id="file" name="file" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.mp4,.avi,.mov,.mkv" required>
-            <div class="note">Accepted: PDF, DOC, DOCX, TXT, JPG, JPEG, PNG, MP4, AVI, MOV, MKV</div>
-            <button type="submit">Upload</button>
-        </form>
+    <div class="overflow-x-auto rounded-lg shadow bg-white dark:bg-gray-800">
+      <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <thead>
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Preview</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">File Name</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Uploader</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Uploaded</th>
+            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="file-list" class="divide-y divide-gray-100 dark:divide-gray-700">
+          <!-- JS will populate rows here -->
+        </tbody>
+      </table>
+      <div id="no-files" class="text-center text-gray-500 dark:text-gray-400 py-12 hidden">No files found.</div>
     </div>
+  </main>
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 hidden min-w-[200px] max-w-xs px-4 py-3 rounded shadow-lg text-white text-center"></div>
+  <!-- Modal for file preview -->
+  <div id="previewModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-lg w-full p-6 relative">
+      <button onclick="closeModal()" class="absolute top-2 right-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-2xl" title="Close">&times;</button>
+      <h3 id="modalTitle" class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100"></h3>
+      <div id="modalPreview" class="flex justify-center items-center min-h-[200px]"></div>
+    </div>
+  </div>
+  <script>
+    // Dark/Light mode toggle
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    function setTheme(dark) {
+      document.documentElement.classList.toggle('dark', dark);
+      localStorage.setItem('theme', dark ? 'dark' : 'light');
+      themeIcon.textContent = dark ? '\u2600\ufe0f' : '\ud83c\udf19';
+    }
+    themeToggle.onclick = () => setTheme(!document.documentElement.classList.contains('dark'));
+    (function() {
+      const saved = localStorage.getItem('theme');
+      setTheme(saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches));
+    })();
+
+    // Toast
+    function showToast(msg, success=true) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = `fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 min-w-[200px] max-w-xs px-4 py-3 rounded shadow-lg text-white text-center ${success ? 'bg-green-600' : 'bg-red-600'}`;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 3000);
+    }
+
+    // Fetch and render submissions
+    let submissions = [];
+    async function fetchSubmissions() {
+      try {
+        const res = await fetch('/submissions');
+        if (!res.ok) throw new Error('Failed to fetch');
+        submissions = await res.json();
+        renderTable();
+      } catch (e) {
+        showToast('Could not load files.', false);
+      }
+    }
+    fetchSubmissions();
+
+    // Render table
+    function renderTable() {
+      const tbody = document.getElementById('file-list');
+      const noFiles = document.getElementById('no-files');
+      let filtered = filterAndSort(submissions);
+      tbody.innerHTML = '';
+      if (!filtered.length) {
+        noFiles.classList.remove('hidden');
+        return;
+      } else {
+        noFiles.classList.add('hidden');
+      }
+      for (const sub of filtered) {
+        const ext = sub.filename.split('.').pop().toLowerCase();
+        let preview = '';
+        if (["jpg","jpeg","png"].includes(ext)) {
+          preview = `<img src="/uploads/${sub.filename}" class="w-16 h-12 object-cover rounded shadow hover:scale-105 transition" alt="Image preview" title="Image preview">`;
+        } else if (["mp4","avi","mov","mkv"].includes(ext)) {
+          preview = `<video src="/uploads/${sub.filename}" class="w-20 h-12 rounded shadow hover:scale-105 transition" title="Video preview"></video>`;
+        } else if (["pdf"].includes(ext)) {
+          preview = `<span title="PDF file" class="text-2xl">📄</span>`;
+        } else if (["doc","docx","txt"].includes(ext)) {
+          preview = `<span title="Document file" class="text-2xl">📝</span>`;
+        } else {
+          preview = `<span title="File" class="text-2xl">📁</span>`;
+        }
+        // Uploader avatar (initials)
+        const initials = sub.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+        const avatar = `<span class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-blue-500 text-white font-bold text-lg mr-2" title="${sub.name}">${initials}</span>`;
+        // Timestamp
+        const date = new Date(sub.timestamp);
+        const timeStr = date.toLocaleString();
+        // Row
+        tbody.innerHTML += `
+          <tr class="hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+            <td class="px-4 py-3">${preview}</td>
+            <td class="px-4 py-3 font-medium text-gray-800 dark:text-gray-100">${sub.filename}</td>
+            <td class="px-4 py-3 flex items-center">${avatar}<span class="text-gray-700 dark:text-gray-200">${sub.name}</span></td>
+            <td class="px-4 py-3 text-gray-500 dark:text-gray-400">${timeStr}</td>
+            <td class="px-4 py-3 text-center flex gap-2 justify-center">
+              <a href="/uploads/${sub.filename}" download title="Download"><button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded shadow transition" tabindex="0">Download</button></a>
+              <button onclick="openModal('/uploads/${sub.filename}', '${ext}', '${sub.filename.replace(/'/g, "&#39;")}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded shadow transition" title="View" tabindex="0">View</button>
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    // Search, sort, filter
+    document.getElementById('search').oninput = renderTable;
+    document.getElementById('sort').onchange = renderTable;
+    function filterAndSort(list) {
+      let q = document.getElementById('search').value.trim().toLowerCase();
+      let sort = document.getElementById('sort').value;
+      let filtered = list.filter(sub =>
+        sub.filename.toLowerCase().includes(q) || sub.name.toLowerCase().includes(q)
+      );
+      if (sort === 'newest') filtered.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+      else if (sort === 'oldest') filtered.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+      else if (sort === 'name') filtered.sort((a,b) => a.filename.localeCompare(b.filename));
+      return filtered;
+    }
+
+    // Modal preview
+    function openModal(url, ext, filename) {
+      document.getElementById('previewModal').classList.remove('hidden');
+      document.getElementById('modalTitle').textContent = filename;
+      var preview = document.getElementById('modalPreview');
+      preview.innerHTML = '';
+      ext = ext.toLowerCase();
+      if (["jpg","jpeg","png"].includes(ext)) {
+        preview.innerHTML = `<img src="${url}" alt="Image preview" class="max-w-full max-h-96 rounded">`;
+      } else if (["mp4","avi","mov","mkv"].includes(ext)) {
+        preview.innerHTML = `<video src="${url}" controls autoplay class="max-w-full max-h-96 rounded"></video>`;
+      } else if (ext === "pdf") {
+        preview.innerHTML = `<iframe src="${url}" width="100%" height="400px" class="rounded"></iframe>`;
+      } else if (["txt"].includes(ext)) {
+        fetch(url).then(r => r.text()).then(text => {
+          preview.innerHTML = `<pre class='bg-gray-100 dark:bg-gray-900 p-4 rounded max-h-96 overflow-auto'>${text.replace(/</g, "&lt;")}</pre>`;
+        });
+      } else {
+        preview.innerHTML = `<div class='text-gray-500 text-center'>Preview not available for this file type.</div>`;
+      }
+    }
+    function closeModal() {
+      document.getElementById('previewModal').classList.add('hidden');
+      document.getElementById('modalPreview').innerHTML = '';
+    }
+    window.onclick = function(event) {
+      var modal = document.getElementById('previewModal');
+      if (event.target == modal) {
+        closeModal();
+      }
+    }
+  </script>
 </body>
 </html>

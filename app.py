@@ -48,5 +48,14 @@ def admin_dashboard():
     submissions = Submission.query.order_by(Submission.timestamp.desc()).all()
     return render_template('admin.html', submissions=submissions)
 
+@app.route('/submissions')
+def submissions_api():
+    submissions = Submission.query.order_by(Submission.timestamp.desc()).all()
+    return [{
+        'name': s.name,
+        'filename': s.filename,
+        'timestamp': s.timestamp.isoformat()
+    } for s in submissions]
+
 if __name__ == '__main__':
     app.run(debug=True)
