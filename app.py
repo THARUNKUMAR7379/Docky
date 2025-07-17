@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import os
 from datetime import datetime
@@ -7,6 +7,7 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///docky.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.secret_key = 'change_this_secret_key'  # Needed for session
 
 db = SQLAlchemy(app)
 
@@ -23,30 +24,47 @@ class Submission(db.Model):
 with app.app_context():
     db.create_all()
 
-@app.route('/', methods=['GET', 'POST'])
-def user_dashboard():
-    if request.method == 'POST':
-        name = request.form['name']
-        file = request.files['file']
-        if name and file:
-            filename = file.filename
-            timestamp = datetime.now()
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-            submission = Submission(name=name, filename=filename, timestamp=timestamp)
-            db.session.add(submission)
-            db.session.commit()
-            return redirect(url_for('user_dashboard'))
-    return render_template('user.html')
+@app.route('/', methods=['GET'])
+def upload_page():
+    return render_template('upload.html')
+
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    name = request.form['name']
+    file = request.files['file']
+    if name and file:
+        filename = file.filename
+        timestamp = datetime.now()
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        submission = Submission(name=name, filename=filename, timestamp=timestamp)
+        db.session.add(submission)
+        db.session.commit()
+        return ('', 200)
+    return ('Missing data', 400)
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-@app.route('/admin')
+@app.route('/admin', methods=['GET', 'POST'])
 def admin_dashboard():
+    if 'admin_auth' not in session:
+        if request.method == 'POST':
+            password = request.form.get('password')
+            if password == 'Nuvai$123':
+                session['admin_auth'] = True
+                return redirect(url_for('admin_dashboard'))
+            else:
+                return render_template('admin_login.html', error='Incorrect password')
+        return render_template('admin_login.html')
     submissions = Submission.query.order_by(Submission.timestamp.desc()).all()
     return render_template('admin.html', submissions=submissions)
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('admin_auth', None)
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/submissions')
 def submissions_api():
