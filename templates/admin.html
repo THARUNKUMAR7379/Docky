@@ -5,7 +5,7 @@
     <title>Docky – Admin Dashboard</title>
     <style>
         body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
-        .container { max-width: 900px; margin: 40px auto; background: #fff; padding: 32px 24px 24px 24px; border-radius: 8px; box-shadow: 0 2px 12px #0001; }
+        .container { max-width: 1000px; margin: 40px auto; background: #fff; padding: 32px 24px 24px 24px; border-radius: 8px; box-shadow: 0 2px 12px #0001; }
         h2 { text-align: center; color: #333; }
         table { width: 100%; border-collapse: collapse; margin-top: 24px; }
         th, td { padding: 12px 10px; border-bottom: 1px solid #eee; text-align: left; }
@@ -16,12 +16,32 @@
         .icon { font-size: 18px; margin-right: 6px; vertical-align: middle; }
         .preview-img { max-width: 60px; max-height: 40px; border-radius: 4px; }
         .preview-video { max-width: 80px; max-height: 50px; border-radius: 4px; }
-        .download-btn { padding: 4px 10px; background: #28a745; color: #fff; border: none; border-radius: 3px; font-size: 13px; cursor: pointer; margin-left: 8px; }
+        .download-btn, .view-btn { padding: 4px 10px; background: #28a745; color: #fff; border: none; border-radius: 3px; font-size: 13px; cursor: pointer; margin-left: 8px; }
+        .view-btn { background: #007bff; margin-left: 0; }
         .download-btn:hover { background: #1e7e34; }
+        .view-btn:hover { background: #0056b3; }
         .no-data { text-align: center; color: #888; padding: 32px 0; }
+        /* Modal styles */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100vw; height: 100vh; overflow: auto; background: rgba(0,0,0,0.6); }
+        .modal-content { background: #fff; margin: 60px auto; padding: 24px; border-radius: 8px; max-width: 700px; position: relative; box-shadow: 0 2px 16px #0002; }
+        .close { color: #aaa; position: absolute; top: 12px; right: 18px; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close:hover { color: #333; }
+        .modal-preview { display: flex; justify-content: center; align-items: center; min-height: 300px; }
+        .modal-preview img, .modal-preview video, .modal-preview iframe, .modal-preview pre { max-width: 100%; max-height: 400px; border-radius: 6px; }
+        .modal-preview pre { background: #f4f4f4; padding: 16px; border-radius: 6px; overflow-x: auto; }
+        .nav {
+            width: 100%; background: none; display: flex; justify-content: flex-end; align-items: center; padding: 18px 32px 0 0;
+        }
+        .user-link {
+            background: #222; color: #fff; text-decoration: none; padding: 8px 18px; border-radius: 5px; font-weight: bold; font-size: 15px; transition: background 0.2s;
+        }
+        .user-link:hover { background: #007bff; }
     </style>
 </head>
 <body>
+    <div class="nav">
+        <a class="user-link" href="/" target="_self">User Dashboard</a>
+    </div>
     <div class="container">
         <h2>All Submissions</h2>
         {% if submissions and submissions|length > 0 %}
@@ -50,6 +70,7 @@
                     {% endif %}
                     <a class="file-link" href="{{ url_for('uploaded_file', filename=submission.filename) }}" target="_blank">{{ submission.filename }}</a>
                     <a href="{{ url_for('uploaded_file', filename=submission.filename) }}" download><button class="download-btn">Download</button></a>
+                    <button class="view-btn" onclick='openModal("{{ url_for('uploaded_file', filename=submission.filename) }}", "{{ ext }}", "{{ submission.filename|e|replace('"', '&quot;') }}")'>View</button>
                 </td>
                 <td>
                     {% if ext in ['jpg','jpeg','png'] %}
@@ -68,5 +89,45 @@
         <div class="no-data">No submissions yet.</div>
         {% endif %}
     </div>
+    <!-- Modal for file preview -->
+    <div id="previewModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h3 id="modalTitle"></h3>
+            <div class="modal-preview" id="modalPreview"></div>
+        </div>
+    </div>
+    <script>
+        function openModal(url, ext, filename) {
+            document.getElementById('previewModal').style.display = 'block';
+            document.getElementById('modalTitle').textContent = filename;
+            var preview = document.getElementById('modalPreview');
+            preview.innerHTML = '';
+            ext = ext.toLowerCase();
+            if (["jpg","jpeg","png"].includes(ext)) {
+                preview.innerHTML = '<img src="' + url + '" alt="Image preview">';
+            } else if (["mp4","avi","mov","mkv"].includes(ext)) {
+                preview.innerHTML = '<video src="' + url + '" controls autoplay style="max-width:100%;max-height:400px;"></video>';
+            } else if (ext === "pdf") {
+                preview.innerHTML = '<iframe src="' + url + '" width="100%" height="400px"></iframe>';
+            } else if (["txt"].includes(ext)) {
+                fetch(url).then(r => r.text()).then(text => {
+                    preview.innerHTML = '<pre>' + text.replace(/</g, "&lt;") + '</pre>';
+                });
+            } else {
+                preview.innerHTML = '<div style="color:#888;text-align:center;">Preview not available for this file type.</div>';
+            }
+        }
+        function closeModal() {
+            document.getElementById('previewModal').style.display = 'none';
+            document.getElementById('modalPreview').innerHTML = '';
+        }
+        window.onclick = function(event) {
+            var modal = document.getElementById('previewModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
 </body>
 </html>
