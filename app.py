@@ -47,6 +47,10 @@ def upload_file():
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
+@app.route('/dashboard')
+def user_dashboard():
+    return render_template('user.html')
+
 @app.route('/admin', methods=['GET', 'POST'])
 def admin_dashboard():
     if 'admin_auth' not in session:
