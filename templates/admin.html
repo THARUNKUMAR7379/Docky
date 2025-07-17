@@ -3,26 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <title>Docky – Admin Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
+        .container { max-width: 900px; margin: 40px auto; background: #fff; padding: 32px 24px 24px 24px; border-radius: 8px; box-shadow: 0 2px 12px #0001; }
+        h2 { text-align: center; color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 24px; }
+        th, td { padding: 12px 10px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background: #f0f0f0; }
+        tr:hover { background: #f9f9f9; }
+        .file-link { color: #007bff; text-decoration: none; }
+        .file-link:hover { text-decoration: underline; }
+        .icon { font-size: 18px; margin-right: 6px; vertical-align: middle; }
+        .preview-img { max-width: 60px; max-height: 40px; border-radius: 4px; }
+        .preview-video { max-width: 80px; max-height: 50px; border-radius: 4px; }
+        .download-btn { padding: 4px 10px; background: #28a745; color: #fff; border: none; border-radius: 3px; font-size: 13px; cursor: pointer; margin-left: 8px; }
+        .download-btn:hover { background: #1e7e34; }
+        .no-data { text-align: center; color: #888; padding: 32px 0; }
+    </style>
 </head>
 <body>
-    <h2>Submissions</h2>
-    {% if submissions and submissions|length > 0 %}
-    <table border="1" cellpadding="6">
-        <tr>
-            <th>Name</th>
-            <th>Document</th>
-            <th>Timestamp</th>
-        </tr>
-        {% for submission in submissions %}
-        <tr>
-            <td>{{ submission.name }}</td>
-            <td><a href="{{ url_for('uploaded_file', filename=submission.filename) }}" target="_blank">{{ submission.filename }}</a></td>
-            <td>{{ submission.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% else %}
-    <p>No submissions yet.</p>
-    {% endif %}
+    <div class="container">
+        <h2>All Submissions</h2>
+        {% if submissions and submissions|length > 0 %}
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>File</th>
+                <th>Preview</th>
+                <th>Timestamp</th>
+            </tr>
+            {% for submission in submissions %}
+            <tr>
+                <td>{{ submission.name }}</td>
+                <td>
+                    {% set ext = submission.filename.split('.')[-1].lower() %}
+                    {% if ext in ['jpg','jpeg','png'] %}
+                        <span class="icon">🖼️</span>
+                    {% elif ext in ['pdf'] %}
+                        <span class="icon">📄</span>
+                    {% elif ext in ['doc','docx','txt'] %}
+                        <span class="icon">📝</span>
+                    {% elif ext in ['mp4','avi','mov','mkv'] %}
+                        <span class="icon">🎬</span>
+                    {% else %}
+                        <span class="icon">📁</span>
+                    {% endif %}
+                    <a class="file-link" href="{{ url_for('uploaded_file', filename=submission.filename) }}" target="_blank">{{ submission.filename }}</a>
+                    <a href="{{ url_for('uploaded_file', filename=submission.filename) }}" download><button class="download-btn">Download</button></a>
+                </td>
+                <td>
+                    {% if ext in ['jpg','jpeg','png'] %}
+                        <img class="preview-img" src="{{ url_for('uploaded_file', filename=submission.filename) }}" alt="Image preview">
+                    {% elif ext in ['mp4','avi','mov','mkv'] %}
+                        <video class="preview-video" src="{{ url_for('uploaded_file', filename=submission.filename) }}" controls></video>
+                    {% else %}
+                        <span style="color:#bbb;">N/A</span>
+                    {% endif %}
+                </td>
+                <td>{{ submission.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <div class="no-data">No submissions yet.</div>
+        {% endif %}
+    </div>
 </body>
 </html>
