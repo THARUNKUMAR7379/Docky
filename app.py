@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, session, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
 import os
 from datetime import datetime
@@ -92,6 +92,23 @@ def submissions_api():
         'filename': s.filename,
         'timestamp': s.timestamp.isoformat()
     } for s in submissions]
+
+@app.route('/delete/<filename>', methods=['DELETE'])
+def delete_file(filename):
+    if 'dashboard_auth' not in session and 'admin_auth' not in session:
+        return abort(403)
+    submission = Submission.query.filter_by(filename=filename).first()
+    if not submission:
+        return abort(404)
+    try:
+        db.session.delete(submission)
+        db.session.commit()
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        if os.path.exists(filepath):
+            os.remove(filepath)
+        return ('', 200)
+    except Exception as e:
+        return abort(500)
 
 if __name__ == '__main__':
     app.run(debug=True)
