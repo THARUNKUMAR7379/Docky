@@ -48,21 +48,22 @@ def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 @app.route('/dashboard', methods=['GET', 'POST'])
-def user_dashboard():
-    if 'dashboard_auth' not in session:
+def dashboard():
+    if 'admin_auth' not in session:
         if request.method == 'POST':
             password = request.form.get('password')
             if password == 'Nuvai$123':
-                session['dashboard_auth'] = True
-                return redirect(url_for('user_dashboard'))
+                session['admin_auth'] = True
+                return redirect(url_for('dashboard'))
             else:
-                return render_template('dashboard_login.html', error='Incorrect password')
-        return render_template('dashboard_login.html')
-    return render_template('user.html')
+                return render_template('admin_login.html', error='Incorrect password')
+        return render_template('admin_login.html')
+    submissions = Submission.query.order_by(Submission.timestamp.desc()).all()
+    return render_template('admin.html', submissions=submissions)
 
 @app.route('/dashboard/logout')
 def dashboard_logout():
-    session.pop('dashboard_auth', None)
+    session.pop('admin_auth', None)
     return redirect(url_for('upload_page'))
 
 @app.route('/admin', methods=['GET', 'POST'])
@@ -87,6 +88,18 @@ def admin_logout():
 @app.route('/submissions')
 def submissions_api():
     submissions = Submission.query.order_by(Submission.timestamp.desc()).all()
+    return [{
+        'name': s.name,
+        'filename': s.filename,
+        'timestamp': s.timestamp.isoformat()
+    } for s in submissions]
+
+@app.route('/my_uploads')
+def my_uploads():
+    name = request.args.get('name')
+    if not name:
+        return [], 400
+    submissions = Submission.query.filter_by(name=name).order_by(Submission.timestamp.desc()).all()
     return [{
         'name': s.name,
         'filename': s.filename,
